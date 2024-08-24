@@ -179,7 +179,7 @@ describe("ScientificJournal Contract", function () {
   });
 
   it("Deve ser possível pré-visualizar artigos de uma determinada categoria", async function () {
-    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Preview 1", "Categoria do Artigo");
+    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Preview", "Categoria do Artigo");
 
     await journal.connect(editor1).defineReviewer(0, reviewer1.address);
     await journal.connect(editor1).defineReviewer(0, reviewer2.address);
@@ -216,7 +216,7 @@ describe("ScientificJournal Contract", function () {
 
     expect(category1.previews[0].title).to.equal("Título do Artigo");
     expect(category1.previews[0].articleId).to.equal(0);
-    expect(category1.previews[0].preview).to.equal("Preview 1");
+    expect(category1.previews[0].preview).to.equal("Preview");
 
     expect(category1.previews[1].title).to.equal("Título do Artigo 1");
     expect(category1.previews[1].articleId).to.equal(1);
@@ -226,6 +226,53 @@ describe("ScientificJournal Contract", function () {
     expect(category2.previews[0].articleId).to.equal(2);
     expect(category2.previews[0].preview).to.equal("Preview 2");
 
+  });
+
+  it("Deve ser possível pré-visualizar todos artigos aprovados", async function () {
+    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Preview", "Categoria do Artigo");
+
+    await journal.connect(editor1).defineReviewer(0, reviewer1.address);
+    await journal.connect(editor1).defineReviewer(0, reviewer2.address);
+    await journal.connect(editor1).defineReviewer(0, reviewer3.address);
+
+    await journal.connect(reviewer1).reviewArticle(0, 2); // Approved
+    await journal.connect(reviewer2).reviewArticle(0, 3); // Rejected
+    await journal.connect(reviewer3).reviewArticle(0, 2); // Approved
+
+    await journal.connect(author1).submitArticle("Título do Artigo 1", "Conteúdo do Artigo 1", "Preview 1", "Categoria do Artigo");
+
+    await journal.connect(editor1).defineReviewer(1, reviewer1.address);
+    await journal.connect(editor1).defineReviewer(1, reviewer2.address);
+    await journal.connect(editor1).defineReviewer(1, reviewer3.address);
+
+    await journal.connect(reviewer1).reviewArticle(1, 2); // Approved
+    await journal.connect(reviewer2).reviewArticle(1, 3); // Rejected
+    await journal.connect(reviewer3).reviewArticle(1, 2); // Approved
+
+    await journal.connect(author1).submitArticle("Título do Artigo 2", "Conteúdo do Artigo 2", "Preview 2", "Categoria do Artigo 2");
+
+    await journal.connect(editor1).defineReviewer(2, reviewer1.address);
+    await journal.connect(editor1).defineReviewer(2, reviewer2.address);
+    await journal.connect(editor1).defineReviewer(2, reviewer3.address);
+
+    await journal.connect(reviewer1).reviewArticle(2, 2); // Approved
+    await journal.connect(reviewer2).reviewArticle(2, 3); // Rejected
+    await journal.connect(reviewer3).reviewArticle(2, 2); // Approved
+
+    const previews = await journal.getPreviews();
+    expect(previews.length).to.equal(3);
+
+    expect(previews[0].title).to.equal("Título do Artigo");
+    expect(previews[0].articleId).to.equal(0);
+    expect(previews[0].preview).to.equal("Preview");
+
+    expect(previews[1].title).to.equal("Título do Artigo 1");
+    expect(previews[1].articleId).to.equal(1);
+    expect(previews[1].preview).to.equal("Preview 1");
+
+    expect(previews[2].title).to.equal("Título do Artigo 2");
+    expect(previews[2].articleId).to.equal(2);
+    expect(previews[2].preview).to.equal("Preview 2");
   });
 
 });

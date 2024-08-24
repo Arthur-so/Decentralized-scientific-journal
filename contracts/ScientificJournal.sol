@@ -47,6 +47,8 @@ contract ScientificJournal {
 
     uint public articleCount = 0;
 
+    Preview[] public previews;
+
     event ArticleSubmitted(uint articleId, address author, string title);
     event ArticleReviewed(uint articleId, ArticleStatus status);
     event ArticlePurchased(uint articleId, address buyer);
@@ -153,6 +155,7 @@ contract ScientificJournal {
         
         categories[_categoryName].previews.push(newPreview);
         categories[_categoryName].name = _categoryName;
+        previews.push(newPreview);
         emit ArticleCategorized(_articleId, _categoryName); // Emite o evento de categorização
 
     }
@@ -204,4 +207,9 @@ contract ScientificJournal {
     function getCategoryArticles(string memory _categoryName) public view returns (Category memory) {
         return categories[_categoryName];
     }
+
+    function getPreviews() public view returns (Preview[] memory) {
+        return previews;
+    }
+
 }
