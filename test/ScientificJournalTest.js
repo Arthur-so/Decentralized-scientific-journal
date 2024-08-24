@@ -28,6 +28,7 @@ describe("ScientificJournal Contract", function () {
     const article = await journal.articles(0);
     expect(article.title).to.equal("Título do Artigo");
     expect(article.content).to.equal("Conteúdo do Artigo");
+    expect(article.category).to.equal("Categoria do Artigo");
     expect(article.author).to.equal(author1.address);
   });
 
@@ -77,6 +78,8 @@ describe("ScientificJournal Contract", function () {
     expect(articlesPurchased.length).to.equal(1);
     expect(articlesPurchased[0].title).to.equal("Título do Artigo");
     expect(articlesPurchased[0].content).to.equal("Conteúdo do Artigo");
+    expect(articlesPurchased[0].category).to.equal("Categoria do Artigo");
+
   });
 
   it("Deve permitir que um usuário visualize apenas os seus artigos comprados", async function () {
@@ -134,6 +137,7 @@ describe("ScientificJournal Contract", function () {
         if (i === 0) {
         expect(article.title).to.equal("Título do Artigo");
         expect(article.content).to.equal("Conteúdo do Artigo");
+        expect(article.category).to.equal("Categoria do Artigo");
         } else if (i === 1) {
         expect(article.title).to.equal("Título do Artigo 2");
         expect(article.content).to.equal("Conteúdo do Artigo 2");
@@ -143,6 +147,7 @@ describe("ScientificJournal Contract", function () {
     const article = articlesPurchasedOwner2[0];
     expect(article.title).to.equal("Título do Artigo 3");
     expect(article.content).to.equal("Conteúdo do Artigo 3");
+    expect(article.category).to.equal("Categoria do Artigo");
   });
 
 });
