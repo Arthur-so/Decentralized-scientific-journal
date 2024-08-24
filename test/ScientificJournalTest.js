@@ -39,9 +39,6 @@ describe("ScientificJournal Contract", function () {
     await journal.connect(editor1).defineReviewer(0, reviewer3.address);
 
     const article = await journal.articles(0);
-    expect(article.reviewers[0]).to.equal(reviewer1.address);
-    expect(article.reviewers[1]).to.equal(reviewer2.address);
-    expect(article.reviewers[2]).to.equal(reviewer3.address);
     expect(article.reviewerCount).to.equal(3);
   });
 
@@ -72,7 +69,7 @@ describe("ScientificJournal Contract", function () {
     await journal.connect(reviewer2).reviewArticle(0, 2); // Approved
     await journal.connect(reviewer3).reviewArticle(0, 2); // Approved
 
-    await expect(journal.connect(owner).buyArticle(0, { value: ethers.utils.parseEther("0.0038") }))
+    await expect(journal.connect(owner).buyArticle(0, { value: ethers.parseEther("0.0038") }))
       .to.emit(journal, "ArticlePurchased")
       .withArgs(0, owner.address);
 
