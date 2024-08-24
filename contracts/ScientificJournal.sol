@@ -11,6 +11,12 @@ contract ScientificJournal {
         ArticleStatus review;
     }
 
+    struct Preview {
+        uint articleId;
+        string title;
+        string preview;
+    }
+
     struct Article {
         uint id;
         address author;
@@ -29,7 +35,7 @@ contract ScientificJournal {
 
     struct Category {
         string name; // Nome da categoria
-        Article[] articles; // Artigos pertencentes a esta categoria
+        Preview[] previews;
     }
 
     mapping(uint => Article) public articles;
@@ -131,17 +137,24 @@ contract ScientificJournal {
         if(article.reviewCount == 3){
             article.status = defineStatus(_articleId);
             if(article.status == ArticleStatus.Approved) {
-                addToCategory(article.category, article); // Adiciona o artigo à categoria se aprovado
+                addToCategory(article.category, article.id, article.title, article.preview); // Adiciona o artigo à categoria se aprovado
             }
             emit ArticleReviewed(_articleId, article.status);
         }
     }
 
-    function addToCategory(string memory _categoryName, Article storage _article) internal {
-        Category storage category = categories[_categoryName];
-        category.name = _categoryName; // Define o nome da categoria
-        category.articles.push(_article); // Adiciona o artigo à categoria
-        emit ArticleCategorized(_article.id, _categoryName); // Emite o evento de categorização
+    function addToCategory(string memory _categoryName, uint _articleId, string memory _title, string memory _preview) internal {
+        // Adiciona a pré-visualização do artigo à categoria
+        Preview memory newPreview = Preview({
+            articleId: _articleId,
+            title: _title,
+            preview: _preview
+        });
+        
+        categories[_categoryName].previews.push(newPreview);
+        categories[_categoryName].name = _categoryName;
+        emit ArticleCategorized(_articleId, _categoryName); // Emite o evento de categorização
+
     }
 
     function defineStatus(uint _articleId) public view returns (ArticleStatus) {

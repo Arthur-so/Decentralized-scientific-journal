@@ -178,8 +178,8 @@ describe("ScientificJournal Contract", function () {
 
   });
 
-  it("Deve ser possível visualizar artigos de uma determinada categoria", async function () {
-    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Preview", "Categoria do Artigo");
+  it("Deve ser possível pré-visualizar artigos de uma determinada categoria", async function () {
+    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Preview 1", "Categoria do Artigo");
 
     await journal.connect(editor1).defineReviewer(0, reviewer1.address);
     await journal.connect(editor1).defineReviewer(0, reviewer2.address);
@@ -189,7 +189,7 @@ describe("ScientificJournal Contract", function () {
     await journal.connect(reviewer2).reviewArticle(0, 3); // Rejected
     await journal.connect(reviewer3).reviewArticle(0, 2); // Approved
 
-    await journal.connect(author1).submitArticle("Título do Artigo 1", "Conteúdo do Artigo 1", "Preview", "Categoria do Artigo");
+    await journal.connect(author1).submitArticle("Título do Artigo 1", "Conteúdo do Artigo 1", "Preview 1", "Categoria do Artigo");
 
     await journal.connect(editor1).defineReviewer(1, reviewer1.address);
     await journal.connect(editor1).defineReviewer(1, reviewer2.address);
@@ -199,7 +199,7 @@ describe("ScientificJournal Contract", function () {
     await journal.connect(reviewer2).reviewArticle(1, 3); // Rejected
     await journal.connect(reviewer3).reviewArticle(1, 2); // Approved
 
-    await journal.connect(author1).submitArticle("Título do Artigo 2", "Conteúdo do Artigo 2", "Preview", "Categoria do Artigo 2");
+    await journal.connect(author1).submitArticle("Título do Artigo 2", "Conteúdo do Artigo 2", "Preview 2", "Categoria do Artigo 2");
 
     await journal.connect(editor1).defineReviewer(2, reviewer1.address);
     await journal.connect(editor1).defineReviewer(2, reviewer2.address);
@@ -211,8 +211,21 @@ describe("ScientificJournal Contract", function () {
 
     const category1 = await journal.getCategoryArticles("Categoria do Artigo");
     const category2 = await journal.getCategoryArticles("Categoria do Artigo 2");
-    expect(category1.articles.length).to.equal(2);
-    expect(category2.articles.length).to.equal(1);
+    expect(category1.previews.length).to.equal(2);
+    expect(category2.previews.length).to.equal(1);
+
+    expect(category1.previews[0].title).to.equal("Título do Artigo");
+    expect(category1.previews[0].articleId).to.equal(0);
+    expect(category1.previews[0].preview).to.equal("Preview 1");
+
+    expect(category1.previews[1].title).to.equal("Título do Artigo 1");
+    expect(category1.previews[1].articleId).to.equal(1);
+    expect(category1.previews[1].preview).to.equal("Preview 1");
+
+    expect(category2.previews[0].title).to.equal("Título do Artigo 2");
+    expect(category2.previews[0].articleId).to.equal(2);
+    expect(category2.previews[0].preview).to.equal("Preview 2");
+
   });
 
 });
