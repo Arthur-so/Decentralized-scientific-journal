@@ -81,8 +81,17 @@ contract ScientificJournal {
         editors[_editor] = true;
     }
 
-    constructor() {
+    constructor(address[] memory _authors, address[] memory _editors, address[] memory _reviewers) {
         owner = msg.sender;
+        for (uint i = 0; i < _authors.length; i++) {
+            authors[_authors[i]] = true;
+        }
+        for (uint i = 0; i < _editors.length; i++) {
+            editors[_editors[i]] = true;
+        }
+        for (uint i = 0; i < _reviewers.length; i++) {
+            reviewers[_reviewers[i]] = true;
+        }
     }
 
     function submitArticle(string memory _title, string memory _content, string memory _preview, string memory _category) public {
