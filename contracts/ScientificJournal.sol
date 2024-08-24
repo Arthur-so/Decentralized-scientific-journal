@@ -16,6 +16,7 @@ contract ScientificJournal {
         address author;
         string title;
         string content;
+        string preview;
         ArticleStatus status;
         Review[3] reviews;
         uint reviewerCount;
@@ -76,7 +77,7 @@ contract ScientificJournal {
         owner = msg.sender;
     }
 
-    function submitArticle(string memory _title, string memory _content, string memory _category) public {
+    function submitArticle(string memory _title, string memory _content, string memory _preview, string memory _category) public {
         require(authors[msg.sender], "You don't have permission to submit articles.");
     
         Article storage newArticle = articles[articleCount];
@@ -84,6 +85,7 @@ contract ScientificJournal {
         newArticle.author = msg.sender;
         newArticle.title = _title;
         newArticle.content = _content;
+        newArticle.preview = _preview;
         newArticle.status = ArticleStatus.Submitted;
         newArticle.reviewerCount = 0;
         newArticle.reviewCount = 0;
