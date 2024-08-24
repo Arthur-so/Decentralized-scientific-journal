@@ -150,4 +150,32 @@ describe("ScientificJournal Contract", function () {
     expect(article.category).to.equal("Categoria do Artigo");
   });
 
+  it("Deve estar sem nenhuma categoria antes de considerar como aprovado", async function () {
+    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Categoria do Artigo");
+
+    await journal.connect(editor1).defineReviewer(0, reviewer1.address);
+    await journal.connect(editor1).defineReviewer(0, reviewer2.address);
+    await journal.connect(editor1).defineReviewer(0, reviewer3.address);
+
+    const category = await journal.categories("Categoria do Artigo");
+    expect(category).to.equal("");
+
+  });
+
+  it("Deve adicionar categoria após ser aprovado", async function () {
+    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Categoria do Artigo");
+
+    await journal.connect(editor1).defineReviewer(0, reviewer1.address);
+    await journal.connect(editor1).defineReviewer(0, reviewer2.address);
+    await journal.connect(editor1).defineReviewer(0, reviewer3.address);
+
+    await journal.connect(reviewer1).reviewArticle(0, 2); // Approved
+    await journal.connect(reviewer2).reviewArticle(0, 3); // Rejected
+    await journal.connect(reviewer3).reviewArticle(0, 2); // Approved
+
+    const category = await journal.categories("Categoria do Artigo");
+    expect(category).to.equal("Categoria do Artigo");
+
+  });
+
 });
