@@ -278,14 +278,21 @@ describe("ScientificJournal Contract", function () {
   it("Deve permitir que um revisor visualize todos os artigos que ele precisa revisar", async function () {
     await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Preview", "Categoria do Artigo");
     await journal.connect(author1).submitArticle("Título do Artigo 2", "Conteúdo do Artigo 2", "Preview 2", "Categoria do Artigo 2");
+    await journal.connect(author1).submitArticle("Título do Artigo 3", "Conteúdo do Artigo 3", "Preview 3", "Categoria do Artigo 3");
+
 
 
     await journal.connect(editor1).defineReviewer(0, reviewer1.address);
-    await journal.connect(editor1).defineReviewer(1, reviewer1.address);
+    await journal.connect(editor1).defineReviewer(1, reviewer2.address);
+    await journal.connect(editor1).defineReviewer(2, reviewer1.address);
 
 
-    const articles = await journal.connect(reviewer1).getReviewerArticles();
-    expect(articles.length).to.equal(2);
+
+    const articlesReviewer1 = await journal.connect(reviewer1).getReviewerArticles();
+    const articlesReviewer2 = await journal.connect(reviewer2).getReviewerArticles();
+
+    expect(articlesReviewer1.length).to.equal(2);
+    expect(articlesReviewer2.length).to.equal(1);
   });
 
 });
