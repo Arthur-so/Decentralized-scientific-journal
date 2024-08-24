@@ -212,4 +212,24 @@ contract ScientificJournal {
         return previews;
     }
 
+    function getReviewerArticles() public view onlyReviewer returns (Article[] memory) {
+    Article[] memory reviewerArticles = new Article[](articleCount);
+    uint count = 0;
+
+    for (uint i = 0; i < articleCount; i++) {
+        if (isArticleReviewer(articles[i], msg.sender)) {
+            reviewerArticles[count] = articles[i];
+            count++;
+        }
+    }
+
+    // Criar um novo array com o tamanho real
+    Article[] memory result = new Article[](count);
+    for (uint j = 0; j < count; j++) {
+        result[j] = reviewerArticles[j];
+    }
+
+    return result;
+}
+
 }

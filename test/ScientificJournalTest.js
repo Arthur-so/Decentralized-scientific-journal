@@ -275,4 +275,17 @@ describe("ScientificJournal Contract", function () {
     expect(previews[2].preview).to.equal("Preview 2");
   });
 
+  it("Deve permitir que um revisor visualize todos os artigos que ele precisa revisar", async function () {
+    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Preview", "Categoria do Artigo");
+    await journal.connect(author1).submitArticle("Título do Artigo 2", "Conteúdo do Artigo 2", "Preview 2", "Categoria do Artigo 2");
+
+
+    await journal.connect(editor1).defineReviewer(0, reviewer1.address);
+    await journal.connect(editor1).defineReviewer(1, reviewer1.address);
+
+
+    const articles = await journal.connect(reviewer1).getReviewerArticles();
+    expect(articles.length).to.equal(2);
+  });
+
 });
