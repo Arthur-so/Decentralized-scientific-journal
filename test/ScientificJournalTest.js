@@ -173,9 +173,48 @@ describe("ScientificJournal Contract", function () {
     await journal.connect(reviewer2).reviewArticle(0, 3); // Rejected
     await journal.connect(reviewer3).reviewArticle(0, 2); // Approved
 
-    const category = await journal.categories("Categoria do Artigo");
-    expect(category).to.equal("Categoria do Artigo");
+    const category = await journal.getCategoryArticles("Categoria do Artigo");
+    expect(category.name).to.equal("Categoria do Artigo");
 
+  });
+
+  it("Deve ser possível visualizar artigos de uma determinada categoria", async function () {
+    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Categoria do Artigo");
+
+    await journal.connect(editor1).defineReviewer(0, reviewer1.address);
+    await journal.connect(editor1).defineReviewer(0, reviewer2.address);
+    await journal.connect(editor1).defineReviewer(0, reviewer3.address);
+
+    await journal.connect(reviewer1).reviewArticle(0, 2); // Approved
+    await journal.connect(reviewer2).reviewArticle(0, 3); // Rejected
+    await journal.connect(reviewer3).reviewArticle(0, 2); // Approved
+
+    await journal.connect(author1).submitArticle("Título do Artigo 1", "Conteúdo do Artigo 1", "Categoria do Artigo");
+
+    await journal.connect(editor1).defineReviewer(1, reviewer1.address);
+    await journal.connect(editor1).defineReviewer(1, reviewer2.address);
+    await journal.connect(editor1).defineReviewer(1, reviewer3.address);
+
+    await journal.connect(reviewer1).reviewArticle(1, 2); // Approved
+    await journal.connect(reviewer2).reviewArticle(1, 3); // Rejected
+    await journal.connect(reviewer3).reviewArticle(1, 2); // Approved
+
+    await journal.connect(author1).submitArticle("Título do Artigo 2", "Conteúdo do Artigo 2", "Categoria do Artigo 2");
+
+    await journal.connect(editor1).defineReviewer(2, reviewer1.address);
+    await journal.connect(editor1).defineReviewer(2, reviewer2.address);
+    await journal.connect(editor1).defineReviewer(2, reviewer3.address);
+
+    await journal.connect(reviewer1).reviewArticle(2, 2); // Approved
+    await journal.connect(reviewer2).reviewArticle(2, 3); // Rejected
+    await journal.connect(reviewer3).reviewArticle(2, 2); // Approved
+
+    const category1 = await journal.getCategoryArticles("Categoria do Artigo");
+    const category2 = await journal.getCategoryArticles("Categoria do Artigo 2");
+    expect(category1.articles.length).to.equal(2);
+    expect(category2.articles.length).to.equal(1);
+
+    
   });
 
 });

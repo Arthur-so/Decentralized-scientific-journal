@@ -186,7 +186,7 @@ contract ScientificJournal {
         return readerArticles[msg.sender];
     }
 
-    function getCategoryArticles(string memory _categoryName) public view returns (Article[] memory) {
-        return categories[_categoryName].articles;
+    function getCategoryArticles(string memory _categoryName) public view returns (Category memory) {
+        return categories[_categoryName];
     }
 }
