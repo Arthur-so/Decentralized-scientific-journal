@@ -21,7 +21,7 @@ describe("ScientificJournal Contract", function () {
   });
 
   it("Deve permitir que um autor submeta um artigo", async function () {
-    await expect(journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo"))
+    await expect(journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Categoria do Artigo"))
       .to.emit(journal, "ArticleSubmitted")
       .withArgs(0, author1.address, "Título do Artigo");
 
@@ -32,7 +32,7 @@ describe("ScientificJournal Contract", function () {
   });
 
   it("Deve permitir que um editor defina revisores para um artigo", async function () {
-    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo");
+    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Categoria do Artigo");
 
     await journal.connect(editor1).defineReviewer(0, reviewer1.address);
     await journal.connect(editor1).defineReviewer(0, reviewer2.address);
@@ -43,7 +43,7 @@ describe("ScientificJournal Contract", function () {
   });
 
   it("Deve permitir que um revisor aprove ou rejeite um artigo", async function () {
-    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo");
+    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Categoria do Artigo");
 
     await journal.connect(editor1).defineReviewer(0, reviewer1.address);
     await journal.connect(editor1).defineReviewer(0, reviewer2.address);
@@ -59,7 +59,7 @@ describe("ScientificJournal Contract", function () {
   });
 
   it("Deve permitir que um usuário compre um artigo aprovado", async function () {
-    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo");
+    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Categoria do Artigo");
 
     await journal.connect(editor1).defineReviewer(0, reviewer1.address);
     await journal.connect(editor1).defineReviewer(0, reviewer2.address);
@@ -80,7 +80,7 @@ describe("ScientificJournal Contract", function () {
   });
 
   it("Deve permitir que um usuário visualize apenas os seus artigos comprados", async function () {
-    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo");
+    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Categoria do Artigo");
 
     await journal.connect(editor1).defineReviewer(0, reviewer1.address);
     await journal.connect(editor1).defineReviewer(0, reviewer2.address);
@@ -90,7 +90,7 @@ describe("ScientificJournal Contract", function () {
     await journal.connect(reviewer2).reviewArticle(0, 2); // Approved
     await journal.connect(reviewer3).reviewArticle(0, 2); // Approved
 
-    await journal.connect(author1).submitArticle("Título do Artigo 2", "Conteúdo do Artigo 2");
+    await journal.connect(author1).submitArticle("Título do Artigo 2", "Conteúdo do Artigo 2", "Categoria do Artigo");
 
     await journal.connect(editor1).defineReviewer(1, reviewer1.address);
     await journal.connect(editor1).defineReviewer(1, reviewer2.address);
@@ -100,7 +100,7 @@ describe("ScientificJournal Contract", function () {
     await journal.connect(reviewer2).reviewArticle(1, 2); // Approved
     await journal.connect(reviewer3).reviewArticle(1, 2); // Approved
 
-    await journal.connect(author1).submitArticle("Título do Artigo 3", "Conteúdo do Artigo 3");
+    await journal.connect(author1).submitArticle("Título do Artigo 3", "Conteúdo do Artigo 3", "Categoria do Artigo");
 
     await journal.connect(editor1).defineReviewer(2, reviewer1.address);
     await journal.connect(editor1).defineReviewer(2, reviewer2.address);

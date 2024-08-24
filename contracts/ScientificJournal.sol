@@ -1,16 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-//import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-
 contract ScientificJournal {
     address public owner;
-    //address priceFeedAddress = 0x14e613AC84a31f709eadbdF89C6CC390fDc9540A;
-    //AggregatorV3Interface internal priceFeed;
 
-    enum ArticleStatus { Submitted, UnderReview, Approved, Rejected}
-    
-    struct Review{
+    enum ArticleStatus { Submitted, UnderReview, Approved, Rejected }
+
+    struct Review {
         address reviewer;
         ArticleStatus review;
     }
@@ -18,16 +14,21 @@ contract ScientificJournal {
     struct Article {
         uint id;
         address author;
-        //address[] co_authors;
         string title;
         string content;
         ArticleStatus status;
-        Review [3] reviews;
+        Review[3] reviews;
         uint reviewerCount;
         uint reviewCount;
-        address [3] reviewers;
+        address[3] reviewers;
         address editor;
         uint price;
+        string category; // Campo para categoria
+    }
+
+    struct Category {
+        string name; // Nome da categoria
+        Article[] articles; // Artigos pertencentes a esta categoria
     }
 
     mapping(uint => Article) public articles;
@@ -35,12 +36,14 @@ contract ScientificJournal {
     mapping(address => bool) public editors;
     mapping(address => bool) public authors;
     mapping(address => Article[]) private readerArticles;
+    mapping(string => Category) public categories; // Mapeamento de categorias
 
     uint public articleCount = 0;
-    
+
     event ArticleSubmitted(uint articleId, address author, string title);
     event ArticleReviewed(uint articleId, ArticleStatus status);
     event ArticlePurchased(uint articleId, address buyer);
+    event ArticleCategorized(uint articleId, string category); // Evento para categorização
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Not authorized");
@@ -57,11 +60,11 @@ contract ScientificJournal {
         _;
     }
 
-    function addAuthor(address _author) public onlyEditor{
+    function addAuthor(address _author) public onlyEditor {
         authors[_author] = true;
     }
 
-    function addReviewer(address _reviewer) public onlyEditor{
+    function addReviewer(address _reviewer) public onlyEditor {
         reviewers[_reviewer] = true;
     }
 
@@ -71,20 +74,9 @@ contract ScientificJournal {
 
     constructor() {
         owner = msg.sender;
-        //priceFeed = AggregatorV3Interface(priceFeedAddress);
     }
 
-    /*function getLatestPrice() public view returns (uint256) {
-        (,int price,,,) = priceFeed.latestRoundData();
-        return uint256(price * 1e10); // Ajusta para 18 decimais
-    }
-
-    function convertUsdToCrypto(uint256 usdAmount) public view returns (uint256) {
-        uint256 priceInUsd = getLatestPrice();
-        return (usdAmount * 1e18) / priceInUsd;
-    }*/
-
-    function submitArticle(string memory _title, string memory _content) public {
+    function submitArticle(string memory _title, string memory _content, string memory _category) public {
         require(authors[msg.sender], "You don't have permission to submit articles.");
     
         Article storage newArticle = articles[articleCount];
@@ -96,8 +88,8 @@ contract ScientificJournal {
         newArticle.reviewerCount = 0;
         newArticle.reviewCount = 0;
         newArticle.price = 3.8e15;
+        newArticle.category = _category; // Definindo a categoria
 
-        // Inicializando o array de reviews e reviewers manualmente
         for (uint i = 0; i < 3; i++) {
             newArticle.reviews[i] = Review(address(0), ArticleStatus.UnderReview);
             newArticle.reviewers[i] = address(0);
@@ -114,8 +106,8 @@ contract ScientificJournal {
         require(reviewers[_reviewer], "Reviewer not found");
         require(articles[_articleId].reviewerCount < 3, "Article already has reviewers");
         require(articles[_articleId].author != msg.sender, "Can't define reviewers for your own article");
-        require(articles[_articleId].author != msg.sender, "Can't define reviewers for your own article");
         require(articles[_articleId].editor == msg.sender || articles[_articleId].editor == address(0), "You are not the editor of this article");
+
         if(articles[_articleId].editor == address(0)){
             articles[_articleId].editor = msg.sender;
         }
@@ -133,25 +125,31 @@ contract ScientificJournal {
         article.reviews[article.reviewCount].review = _status;
         article.reviewCount++;
         article.status = ArticleStatus.UnderReview;
+
         if(article.reviewCount == 3){
             article.status = defineStatus(_articleId);
+            if(article.status == ArticleStatus.Approved) {
+                addToCategory(article.category, article); // Adiciona o artigo à categoria se aprovado
+            }
             emit ArticleReviewed(_articleId, article.status);
         }
+    }
+
+    function addToCategory(string memory _categoryName, Article storage _article) internal {
+        Category storage category = categories[_categoryName];
+        category.name = _categoryName; // Define o nome da categoria
+        category.articles.push(_article); // Adiciona o artigo à categoria
+        emit ArticleCategorized(_article.id, _categoryName); // Emite o evento de categorização
     }
 
     function defineStatus(uint _articleId) public view returns (ArticleStatus) {
         uint countApproves = 0;
         for(uint i = 0; i < 3; i++){
-             if(articles[_articleId].reviews[i].review == ArticleStatus.Approved){
+            if(articles[_articleId].reviews[i].review == ArticleStatus.Approved){
                 countApproves++;
             }
         }
-        if(countApproves >= 2){
-            return ArticleStatus.Approved;
-        }
-        else{
-            return ArticleStatus.Rejected;
-        }
+        return countApproves >= 2 ? ArticleStatus.Approved : ArticleStatus.Rejected;
     }
 
     function isArticleReviewer(Article memory _article, address _reviewer) public pure returns (bool){
@@ -163,19 +161,18 @@ contract ScientificJournal {
         return false;
     }
 
-    function buyArticle(uint _articleId) public payable{
+    function buyArticle(uint _articleId) public payable {
         require(_articleId >= 0 && _articleId < articleCount, "Invalid article ID");
         Article storage article = articles[_articleId];
         require(article.status == ArticleStatus.Approved, "Article not approved");
-        //10 dolares = 0.019 BNB = 1.9e16 wei de BNB
-        //10 dolares = 0.0038 ETH = 3.8e15 wei de ETH
         require(msg.value >= article.price, "Insufficient funds");
-        //require(msg.value >= 1.9e15, "Insufficient funds");
+        
         address payable author = payable(article.author);
         address payable editor = payable(article.editor);
         address payable reviewer1 = payable(article.reviewers[0]);
         address payable reviewer2 = payable(article.reviewers[1]);
         address payable reviewer3 = payable(article.reviewers[2]);
+
         author.transfer(article.price / 2);
         editor.transfer(article.price / 8);
         reviewer1.transfer(article.price / 8);
@@ -185,8 +182,11 @@ contract ScientificJournal {
         emit ArticlePurchased(_articleId, msg.sender);
     }
 
-    function getArticles () public view returns (Article[] memory){
+    function getArticles() public view returns (Article[] memory) {
         return readerArticles[msg.sender];
     }
 
+    function getCategoryArticles(string memory _categoryName) public view returns (Article[] memory) {
+        return categories[_categoryName].articles;
+    }
 }
