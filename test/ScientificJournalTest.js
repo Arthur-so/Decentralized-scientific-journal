@@ -9,7 +9,7 @@ describe("ScientificJournal Contract", function () {
 
   beforeEach(async function () {
     Journal = await ethers.getContractFactory("ScientificJournal");
-    journal = await Journal.deploy();  // Deploy the contract
+    journal = await Journal.deploy([],[],[]);  // Deploy the contract
     [owner, owner2, editor1, reviewer1, reviewer2, reviewer3, author1] = await ethers.getSigners();
     
     // Adicionando editor, autores e revisores automaticamente
