@@ -56,29 +56,57 @@ describe("ScientificJournal Contract", function () {
     await journal.connect(reviewer2).reviewArticle(2, 3); // Rejected
     await journal.connect(reviewer3).reviewArticle(2, 2); // Approved
 
-    const previews = await journal.getAllArticles();
-    // console.log(previews)
-    previews.forEach(preview => {
-      console.log(`
-        ID: ${preview.id}
-        Título: ${preview.title}
-        Preview: ${preview.preview}
-        Categoria: ${preview.category}
-      `);
-    });
+    const articlesObject = await journal.getAllArticles();
+    const previews = articlesObject.map(article => ({
+      id: Number(article.id),
+      title: article.title,
+      preview: article.preview,
+      category: article.category
+    }));
+
     expect(previews.length).to.equal(3);
 
     expect(previews[0].title).to.equal("Título do Artigo");
-    expect(previews[0].articleId).to.equal(0);
+    expect(previews[0].id).to.equal(0);
     expect(previews[0].preview).to.equal("Preview");
 
     expect(previews[1].title).to.equal("Título do Artigo 1");
-    expect(previews[1].articleId).to.equal(1);
+    expect(previews[1].id).to.equal(1);
     expect(previews[1].preview).to.equal("Preview 1");
 
     expect(previews[2].title).to.equal("Título do Artigo 2");
-    expect(previews[2].articleId).to.equal(2);
+    expect(previews[2].id).to.equal(2);
     expect(previews[2].preview).to.equal("Preview 2");
+  });
+
+  it("Deve permitir que um revisor visualize todos os artigos que ele precisa revisar", async function () {
+    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Preview", "Categoria do Artigo");
+    await journal.connect(author1).submitArticle("Título do Artigo 2", "Conteúdo do Artigo 2", "Preview 2", "Categoria do Artigo 2");
+    await journal.connect(author1).submitArticle("Título do Artigo 3", "Conteúdo do Artigo 3", "Preview 3", "Categoria do Artigo 3");
+
+    await journal.connect(editor1).defineReviewer(0, reviewer1.address);
+    await journal.connect(editor1).defineReviewer(1, reviewer2.address);
+    await journal.connect(editor1).defineReviewer(2, reviewer1.address);
+
+    const articlesReviewer1 = await journal.connect(reviewer1).getReviewerArticles();
+    const articlesReviewer2 = await journal.connect(reviewer2).getReviewerArticles();
+
+    expect(articlesReviewer1.length).to.equal(2);
+    expect(articlesReviewer2.length).to.equal(1);
+  });
+
+  it("Não deve permitir que um revisor visualize artigos que ele já revisou", async function () {
+    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Preview", "Categoria do Artigo");
+
+    await journal.connect(editor1).defineReviewer(0, reviewer1.address);
+    await journal.connect(editor1).defineReviewer(1, reviewer2.address);
+    await journal.connect(editor1).defineReviewer(2, reviewer3.address);
+
+    await journal.connect(reviewer1).reviewArticle(0, 2); // Approved
+
+    const articlesReviewer1 = await journal.connect(reviewer1).getReviewerArticles();
+
+    expect(articlesReviewer1.length).to.equal(0);
   });
 
   // it("Deve permitir que um editor defina revisores para um artigo", async function () {

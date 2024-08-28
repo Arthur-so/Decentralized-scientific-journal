@@ -133,13 +133,31 @@ contract ScientificJournal {
 
     function getReviewerArticles() public view onlyReviewer returns (Article[] memory) {
         uint count;
-        for (uint i = 0; i < articleCount; i++) if (isReviewer(articles[i], msg.sender)) count++;
+        for (uint i = 0; i < articleCount; i++) {
+            if (isReviewer(articles[i], msg.sender) && !hasReviewed(articles[i], msg.sender)) {
+                count++;
+            }
+        }
 
         Article[] memory result = new Article[](count);
         uint index;
-        for (uint i = 0; i < articleCount; i++) if (isReviewer(articles[i], msg.sender)) result[index++] = articles[i];
+        for (uint i = 0; i < articleCount; i++) {
+            if (isReviewer(articles[i], msg.sender) && !hasReviewed(articles[i], msg.sender)) {
+                result[index++] = articles[i];
+            }
+        }
         return result;
     }
+
+    function hasReviewed(Article storage article, address reviewer) internal view returns (bool) {
+        for (uint i = 0; i < 3; i++) {
+            if (article.reviewers[i] == reviewer && article.reviews[i].review != ArticleStatus.UnderReview) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     function getItemsByAuthor(address _author) public view returns (Article[] memory) {
         uint count;
