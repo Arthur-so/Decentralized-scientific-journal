@@ -3,20 +3,8 @@ pragma solidity ^0.8.19;
 
 contract ScientificJournal {
     address public owner;
-
     enum ArticleStatus { Submitted, UnderReview, Approved, Rejected }
-
-    struct Review {
-        address reviewer;
-        ArticleStatus review;
-    }
-
-    struct Preview {
-        uint articleId;
-        string title;
-        string preview;
-    }
-
+    struct Review { address reviewer; ArticleStatus review; }
     struct Article {
         uint id;
         address author;
@@ -25,78 +13,39 @@ contract ScientificJournal {
         string preview;
         ArticleStatus status;
         Review[3] reviews;
-        uint reviewerCount;
         uint reviewCount;
+        uint reviewCountStatus;
         address[3] reviewers;
         address editor;
         uint price;
-        string category; // Campo para categoria
-    }
-
-    struct Category {
-        string name; // Nome da categoria
-        Preview[] previews;
+        string category;
     }
 
     mapping(uint => Article) public articles;
     mapping(address => bool) public reviewers;
     mapping(address => bool) public editors;
     mapping(address => bool) public authors;
-    mapping(address => Article[]) private readerArticles;
-    mapping(string => Category) public categories; // Mapeamento de categorias
+    mapping(address => uint[]) private readerArticleIds;
+    uint public articleCount;
 
-    uint public articleCount = 0;
+    event ArticleSubmitted(uint indexed articleId, address indexed author, string title);
+    event ArticleReviewed(uint indexed articleId, ArticleStatus status);
+    event ArticlePurchased(uint indexed articleId, address indexed buyer);
 
-    Preview[] public previews;
-
-    event ArticleSubmitted(uint articleId, address author, string title);
-    event ArticleReviewed(uint articleId, ArticleStatus status);
-    event ArticlePurchased(uint articleId, address buyer);
-    event ArticleCategorized(uint articleId, string category); // Evento para categorização
-
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Not authorized");
-        _;
-    }
-
-    modifier onlyReviewer() {
-        require(reviewers[msg.sender], "Not authorized");
-        _;
-    }
-
-    modifier onlyEditor() {
-        require(editors[msg.sender], "Not authorized");
-        _;
-    }
-
-    function addAuthor(address _author) public onlyEditor {
-        authors[_author] = true;
-    }
-
-    function addReviewer(address _reviewer) public onlyEditor {
-        reviewers[_reviewer] = true;
-    }
-
-    function addEditor(address _editor) public {
-        editors[_editor] = true;
-    }
+    modifier onlyOwner() { require(msg.sender == owner, "Not authorized"); _; }
+    modifier onlyReviewer() { require(reviewers[msg.sender], "Not authorized"); _; }
+    modifier onlyEditor() { require(editors[msg.sender], "Not authorized"); _; }
 
     constructor(address[] memory _authors, address[] memory _editors, address[] memory _reviewers) {
         owner = msg.sender;
-        for (uint i = 0; i < _authors.length; i++) {
-            authors[_authors[i]] = true;
-        }
-        for (uint i = 0; i < _editors.length; i++) {
-            editors[_editors[i]] = true;
-        }
-        for (uint i = 0; i < _reviewers.length; i++) {
-            reviewers[_reviewers[i]] = true;
-        }
+        for (uint i = 0; i < _authors.length; i++) authors[_authors[i]] = true;
+        for (uint i = 0; i < _editors.length; i++) editors[_editors[i]] = true;
+        for (uint i = 0; i < _reviewers.length; i++) reviewers[_reviewers[i]] = true;
     }
 
     function submitArticle(string memory _title, string memory _content, string memory _preview, string memory _category) public {
-        require(authors[msg.sender], "You don't have permission to submit articles.");
-    
+        require(authors[msg.sender], "Not an authorized author");
+
         Article storage newArticle = articles[articleCount];
         newArticle.id = articleCount;
         newArticle.author = msg.sender;
@@ -104,141 +53,107 @@ contract ScientificJournal {
         newArticle.content = _content;
         newArticle.preview = _preview;
         newArticle.status = ArticleStatus.Submitted;
-        newArticle.reviewerCount = 0;
-        newArticle.reviewCount = 0;
         newArticle.price = 3.8e15;
-        newArticle.category = _category; // Definindo a categoria
+        newArticle.category = _category;
 
         for (uint i = 0; i < 3; i++) {
             newArticle.reviews[i] = Review(address(0), ArticleStatus.UnderReview);
             newArticle.reviewers[i] = address(0);
         }
-        newArticle.editor = address(0);
         emit ArticleSubmitted(articleCount, msg.sender, _title);
         articleCount++;
     }
 
     function defineReviewer(uint _articleId, address _reviewer) public onlyEditor {
-        require(_articleId >= 0 && _articleId < articleCount, "Invalid article ID");
-        require(articles[_articleId].status == ArticleStatus.Submitted, "Invalid article");
-        require(_reviewer != articles[_articleId].author, "Author can't be reviewer");
-        require(reviewers[_reviewer], "Reviewer not found");
-        require(articles[_articleId].reviewerCount < 3, "Article already has reviewers");
-        require(articles[_articleId].author != msg.sender, "Can't define reviewers for your own article");
-        require(articles[_articleId].editor == msg.sender || articles[_articleId].editor == address(0), "You are not the editor of this article");
+        Article storage article = articles[_articleId];
+        require(article.status == ArticleStatus.Submitted, "Invalid article status");
+        require(reviewers[_reviewer], "Not an authorized reviewer");
+        require(article.reviewCount < 3, "Reviewers limit reached");
 
-        if(articles[_articleId].editor == address(0)){
-            articles[_articleId].editor = msg.sender;
-        }
-        articles[_articleId].reviewers[articles[_articleId].reviewerCount] = _reviewer;
-        articles[_articleId].status = articles[_articleId].reviewerCount == 2 ? ArticleStatus.UnderReview : ArticleStatus.Submitted;
-        articles[_articleId].reviewerCount++;
+        if (article.editor == address(0)) article.editor = msg.sender;
+        require(article.editor == msg.sender, "Not the editor of this article");
+
+        article.reviewers[article.reviewCount] = _reviewer;
+        article.status = (article.reviewCount == 2) ? ArticleStatus.UnderReview : ArticleStatus.Submitted;
+        article.reviewCount++;
     }
+
     
     function reviewArticle(uint _articleId, ArticleStatus _status) public onlyReviewer {
         require(_articleId >= 0 && _articleId < articleCount, "Invalid article ID");
         require(_status == ArticleStatus.Approved || _status == ArticleStatus.Rejected, "Invalid review");
-        require(isArticleReviewer(articles[_articleId], msg.sender), "You don't have permission to review this article");
+        require(isReviewer(articles[_articleId], msg.sender), "You don't have permission to review this article");
         Article storage article = articles[_articleId];
-        article.reviews[article.reviewCount].reviewer = msg.sender;
-        article.reviews[article.reviewCount].review = _status;
-        article.reviewCount++;
+        article.reviews[article.reviewCountStatus].review = _status;
         article.status = ArticleStatus.UnderReview;
+        article.reviewCountStatus++;
 
-        if(article.reviewCount == 3){
+        if(article.reviewCountStatus == 3){
             article.status = defineStatus(_articleId);
-            if(article.status == ArticleStatus.Approved) {
-                addToCategory(article.category, article.id, article.title, article.preview); // Adiciona o artigo à categoria se aprovado
-            }
             emit ArticleReviewed(_articleId, article.status);
         }
     }
 
-    function addToCategory(string memory _categoryName, uint _articleId, string memory _title, string memory _preview) internal {
-        // Adiciona a pré-visualização do artigo à categoria
-        Preview memory newPreview = Preview({
-            articleId: _articleId,
-            title: _title,
-            preview: _preview
-        });
-        
-        categories[_categoryName].previews.push(newPreview);
-        categories[_categoryName].name = _categoryName;
-        previews.push(newPreview);
-        emit ArticleCategorized(_articleId, _categoryName); // Emite o evento de categorização
-
-    }
-
     function defineStatus(uint _articleId) public view returns (ArticleStatus) {
+        Article storage article = articles[_articleId];
         uint countApproves = 0;
-        for(uint i = 0; i < 3; i++){
-            if(articles[_articleId].reviews[i].review == ArticleStatus.Approved){
+        for (uint i = 0; i < 3; i++) {
+            if (article.reviews[i].review == ArticleStatus.Approved) {
                 countApproves++;
             }
         }
         return countApproves >= 2 ? ArticleStatus.Approved : ArticleStatus.Rejected;
     }
 
-    function isArticleReviewer(Article memory _article, address _reviewer) public pure returns (bool){
-        for(uint i = 0; i < _article.reviewers.length; i++){
-            if(_reviewer == _article.reviewers[i]){
-                return true;
-            }
-        }
+    function isReviewer(Article storage article, address _reviewer) internal view returns (bool) {
+        for (uint i = 0; i < 3; i++) if (article.reviewers[i] == _reviewer) return true;
         return false;
     }
 
     function buyArticle(uint _articleId) public payable {
-        require(_articleId >= 0 && _articleId < articleCount, "Invalid article ID");
         Article storage article = articles[_articleId];
         require(article.status == ArticleStatus.Approved, "Article not approved");
         require(msg.value >= article.price, "Insufficient funds");
-        
-        address payable author = payable(article.author);
-        address payable editor = payable(article.editor);
-        address payable reviewer1 = payable(article.reviewers[0]);
-        address payable reviewer2 = payable(article.reviewers[1]);
-        address payable reviewer3 = payable(article.reviewers[2]);
 
-        author.transfer(article.price / 2);
-        editor.transfer(article.price / 8);
-        reviewer1.transfer(article.price / 8);
-        reviewer2.transfer(article.price / 8);
-        reviewer3.transfer(article.price / 8);
-        readerArticles[msg.sender].push(article);
+        uint share = article.price / 8;
+        payable(article.author).transfer(article.price / 2);
+        if (article.editor != address(0)) payable(article.editor).transfer(share);
+        for (uint i = 0; i < 3; i++) if (article.reviewers[i] != address(0)) payable(article.reviewers[i]).transfer(share);
+
+        readerArticleIds[msg.sender].push(_articleId);
         emit ArticlePurchased(_articleId, msg.sender);
     }
 
     function getArticles() public view returns (Article[] memory) {
-        return readerArticles[msg.sender];
-    }
-
-    function getCategoryArticles(string memory _categoryName) public view returns (Category memory) {
-        return categories[_categoryName];
-    }
-
-    function getPreviews() public view returns (Preview[] memory) {
-        return previews;
+        uint[] storage ids = readerArticleIds[msg.sender];
+        Article[] memory result = new Article[](ids.length);
+        for (uint i = 0; i < ids.length; i++) result[i] = articles[ids[i]];
+        return result;
     }
 
     function getReviewerArticles() public view onlyReviewer returns (Article[] memory) {
-    Article[] memory reviewerArticles = new Article[](articleCount);
-    uint count = 0;
+        uint count;
+        for (uint i = 0; i < articleCount; i++) if (isReviewer(articles[i], msg.sender)) count++;
 
-    for (uint i = 0; i < articleCount; i++) {
-        if (isArticleReviewer(articles[i], msg.sender)) {
-            reviewerArticles[count] = articles[i];
-            count++;
-        }
+        Article[] memory result = new Article[](count);
+        uint index;
+        for (uint i = 0; i < articleCount; i++) if (isReviewer(articles[i], msg.sender)) result[index++] = articles[i];
+        return result;
     }
 
-    // Criar um novo array com o tamanho real
-    Article[] memory result = new Article[](count);
-    for (uint j = 0; j < count; j++) {
-        result[j] = reviewerArticles[j];
+    function getItemsByAuthor(address _author) public view returns (Article[] memory) {
+        uint count;
+        for (uint i = 0; i < articleCount; i++) if (articles[i].author == _author) count++;
+
+        Article[] memory result = new Article[](count);
+        uint index;
+        for (uint i = 0; i < articleCount; i++) if (articles[i].author == _author) result[index++] = articles[i];
+        return result;
     }
 
-    return result;
-}
-
+    function getAllArticles() public view returns (Article[] memory) {
+        Article[] memory result = new Article[](articleCount);
+        for (uint i = 0; i < articleCount; i++) result[i] = articles[i];
+        return result;
+    }
 }
