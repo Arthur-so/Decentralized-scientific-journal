@@ -110,6 +110,10 @@ contract ScientificJournal {
         return false;
     }
 
+    function isEditor() public view returns (bool) {
+        return editors[msg.sender];
+    }
+
     function buyArticle(uint _articleId) public payable {
         Article storage article = articles[_articleId];
         require(article.status == ArticleStatus.Approved, "Article not approved");

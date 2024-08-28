@@ -108,6 +108,87 @@ describe("ScientificJournal Contract", function () {
 
     expect(articlesReviewer1.length).to.equal(0);
   });
+  
+  it("Deve permitir verificar se uma conta é de editor", async function () {
+    const notEditor = await journal.connect(author1).isEditor()
+    const isEditor = await journal.connect(editor1).isEditor()
+
+    expect(notEditor).to.equal(false);
+    expect(isEditor).to.equal(true);
+
+  });
+
+  it("Deve comprar artigos aprovados", async function () {
+    await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Preview", "Categoria do Artigo");
+
+    await journal.connect(editor1).defineReviewer(0, reviewer1.address);
+    await journal.connect(editor1).defineReviewer(0, reviewer2.address);
+    await journal.connect(editor1).defineReviewer(0, reviewer3.address);
+
+    await journal.connect(reviewer1).reviewArticle(0, 2); // Approved
+    await journal.connect(reviewer2).reviewArticle(0, 3); // Rejected
+    await journal.connect(reviewer3).reviewArticle(0, 2); // Approved
+
+    await expect(journal.connect(owner).buyArticle(0, { value: ethers.parseEther("0.0038") }))
+         .to.emit(journal, "ArticlePurchased")
+         .withArgs(0, owner.address);
+
+    const articlesPurchased = await journal.connect(owner).getArticles();
+    expect(articlesPurchased.length).to.equal(1);
+    expect(articlesPurchased[0].title).to.equal("Título do Artigo");
+    expect(articlesPurchased[0].content).to.equal("Conteúdo do Artigo");
+    expect(articlesPurchased[0].category).to.equal("Categoria do Artigo");
+
+    });
+
+    it("Deve ser possível revisar um novo artigo após alugum ser comprado", async function () {
+      await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Preview", "Categoria do Artigo");
+  
+      await journal.connect(editor1).defineReviewer(0, reviewer1.address);
+      await journal.connect(editor1).defineReviewer(0, reviewer2.address);
+      await journal.connect(editor1).defineReviewer(0, reviewer3.address);
+  
+      await journal.connect(reviewer1).reviewArticle(0, 2); // Approved
+      await journal.connect(reviewer2).reviewArticle(0, 3); // Rejected
+      await journal.connect(reviewer3).reviewArticle(0, 2); // Approved
+  
+      await expect(journal.connect(owner).buyArticle(0, { value: ethers.parseEther("0.0038") }))
+           .to.emit(journal, "ArticlePurchased")
+           .withArgs(0, owner.address);
+  
+      await journal.connect(author1).submitArticle("Título do Artigo2", "Conteúdo do Artigo2", "Preview2", "Categoria do Artigo2");
+
+      await journal.connect(editor1).defineReviewer(1, reviewer1.address);
+      await journal.connect(editor1).defineReviewer(1, reviewer2.address);
+      await journal.connect(editor1).defineReviewer(1, reviewer3.address);
+
+      await journal.connect(reviewer1).reviewArticle(1, 2); // Approved
+      await journal.connect(reviewer2).reviewArticle(1, 3); // Rejected
+      await journal.connect(reviewer3).reviewArticle(1, 2); // Approved
+
+      await expect(journal.connect(owner).buyArticle(1, { value: ethers.parseEther("0.0038") }))
+      .to.emit(journal, "ArticlePurchased")
+      .withArgs(1, owner.address);
+
+      const articlesObject = await journal.getAllArticles();
+      const previews = articlesObject.map(article => ({
+        id: Number(article.id),
+        title: article.title,
+        preview: article.preview,
+        category: article.category
+      }));
+
+      expect(previews.length).to.equal(2);
+
+      expect(previews[0].title).to.equal("Título do Artigo");
+      expect(previews[0].id).to.equal(0);
+      expect(previews[0].preview).to.equal("Preview");
+
+      expect(previews[1].title).to.equal("Título do Artigo2");
+      expect(previews[1].id).to.equal(1);
+      expect(previews[1].preview).to.equal("Preview2");
+  
+      });
 
   // it("Deve permitir que um editor defina revisores para um artigo", async function () {
   //   await journal.connect(author1).submitArticle("Título do Artigo", "Conteúdo do Artigo", "Preview", "Categoria do Artigo");
