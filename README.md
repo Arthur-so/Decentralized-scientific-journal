@@ -72,3 +72,40 @@ The `ScientificJournal` smart contract is designed to manage the submission, rev
 
 To interact with the contract, ensure that your address is registered as an author, reviewer, or editor. Authors can submit articles, reviewers can review assigned articles, editors can manage the review process, and readers can purchase approved articles.
 
+## Front-End Application
+
+This project includes a React front-end that interacts with the `ScientificJournal` smart contract. The application provides different pages for users to submit articles, review articles, purchase approved articles, and browse article previews by category.
+
+### Project Structure
+
+- **`index.js`**: The main entry point of the React application. It sets up the router and renders the application.
+
+- **Pages**:
+  - **`UserPostPage`**: A page where authors can submit new articles.
+  - **`ReviewArticlePage`**: A page where reviewers can review articles assigned to them.
+  - **`AddReviewerPage`**: A page where editors can add new reviewers.
+  - **`CategoryPage`**: A page that displays article previews filtered by category.
+  - **`PreviewsPage`**: The home page that displays all article previews.
+  - **`PurchasedArticlesPage`**: A page where users can view articles they have purchased.
+  - **`ErrorPage`**: A fallback page displayed when the user navigates to an unknown route.
+
+### Routing
+
+The application uses React Router for routing between different pages. Below is an overview of the routes defined in the application:
+
+- **`/`**: The root path that renders the `PreviewsPage`.
+- **`/send`**: Renders the `UserPostPage` where authors can submit articles.
+- **`/articles`**: Renders the `PurchasedArticlesPage` where users can view purchased articles.
+- **`/addreviewer`**: Renders the `AddReviewerPage` where editors can add reviewers.
+- **`/review`**: Renders the `ReviewArticlePage` where reviewers can review articles.
+- **`/category/:id`**: Renders the `CategoryPage` where article previews are filtered by category.
+- **`*`**: Renders the `ErrorPage` for any undefined routes.
+
+### Setup and Installation
+
+To set up the React front-end, follow these steps:
+
+1. **Install dependencies**:
+   ```bash
+   npm install
+
