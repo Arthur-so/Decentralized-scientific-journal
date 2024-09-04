@@ -1,0 +1,46 @@
+.review-post {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  padding: 15px;
+  width: 100%;
+  margin-top: 10%;
+}
+
+.review-post h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+.container-post {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+.review-post p {
+  color: #666;
+}
+
+.exclude-button {
+  background-color: red;
+  height: min-content;
+  width: min-content;
+}
+
+.accept-button {
+  background-color: green;
+  height: min-content;
+  width: min-content;
+}
+
+.feedback-button {
+  background-color: beige;
+  height: min-content;
+  width: min-content;
+}
+
+.-inv {
+  display: none;
+}

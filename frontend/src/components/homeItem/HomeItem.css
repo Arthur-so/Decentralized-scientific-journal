@@ -1,0 +1,34 @@
+.home-post {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: none;
+  margin-bottom: 20px;
+  padding: 15px;
+  width: 100%;
+  box-sizing: content-box;
+}
+
+.home-post:hover {
+  cursor: pointer;
+}
+
+.home-post:first-child{
+  margin-top: 10%;
+}
+
+.home-container-post div{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+.home-container-post h3 {
+  text-align: start;
+  margin-left: 5%;
+}
+
+.home-container-post p {
+  max-width: 60%;
+  text-wrap: balance;
+}

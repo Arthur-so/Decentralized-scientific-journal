@@ -1,0 +1,32 @@
+[
+    {
+      "id": 0,
+      "category": "Biomedicine",
+      "description": "Articles related to biomedical research and advances in medicine.",
+      "src": "https://via.placeholder.com/150/ff7f7f/ffffff?text=Biomedicine"
+    },
+    {
+      "id": 1,
+      "category": "Engineering",
+      "description": "Innovative research in civil, mechanical, and electrical engineering.",
+      "src": "https://via.placeholder.com/150/7f7fff/ffffff?text=Engineering"
+    },
+    {
+      "id": 2,
+      "category": "Information Technology",
+      "description": "Studies on software development, cybersecurity, and artificial intelligence.",
+      "src": "https://via.placeholder.com/150/7fff7f/ffffff?text=IT"
+    },
+    {
+      "id": 3,
+      "category": "Social Sciences",
+      "description": "Articles exploring social, cultural, and economic aspects of society.",
+      "src": "https://via.placeholder.com/150/ffff7f/000000?text=Social+Sciences"
+    },
+    {
+      "id": 4,
+      "category": "Ecology",
+      "description": "Research on environmental conservation, biodiversity, and sustainability.",
+      "src": "https://via.placeholder.com/150/ff7fff/000000?text=Ecology"
+    }
+]
